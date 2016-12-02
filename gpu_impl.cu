@@ -1,33 +1,42 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <curand.h>
+#include <curand_kernel.h>
 #define THREADS 128
 
-__global__ void hello()
-{
-    printf("Hello world! I'm a thread in block %d\n", blockIdx.x);
+__device__ inline void rand_g (int &result) {
+	int thid = threadIdx.x;
+	curandState_t state;
+	curand_init (clock64(),thid,0,&state);
+	result = curand(&state)%RAND_MAX;
+	if (result < 0) result = -result;
+	//printf (" %d ", result);	
 }
-
 
 __global__ void monteCarlopi (int *din) {
 	
-	extern __shared__ int sm[2*THREADS];
+	 __shared__ int sm[2*THREADS];
 
-	int t = blockIdx.x*blockDim.x + threadIdx.x;
 	int thid = threadIdx.x;
 
 	int a = 2*thid;
 	int b = 2*thid + 1;
 
 	double x,y;
+	int x1,y1;
+	rand_g(x1);	
+	rand_g(y1);	
 	
-	x = rand()/RAND_MAX;
-	y = rand()/RAND_MAX;
+	x = (double)x1/RAND_MAX;
+	y = (double) y1/RAND_MAX;
 	if ((x*x + y*y) < 1)
 		sm[a] = 1; 
 	else 
 		sm[a] = 0;
-	x = rand()/RAND_MAX;
-	y = rand()/RAND_MAX;
+	rand_g(x1);	
+	rand_g(y1);	
+	x = (double) x1/RAND_MAX;
+	y = (double) y1/RAND_MAX;
 	if ((x*x + y*y) < 1)
 		sm[b] = 1;
 	else
@@ -35,13 +44,20 @@ __global__ void monteCarlopi (int *din) {
 	// wait for all threads to finish
 
 	__syncthreads();
+	if (thid == 0) {
+	//	printf (" rand %d %f ",  x1, x);
+		for (int i =0;i<2*THREADS;i++)
+			printf("%d,",sm[i]);
+
+	}
+	__syncthreads();
 
 	// find sum of points inside the rectangle using sum function
 
 	sm[a] += sm[b]; // 128 elements
 	__syncthreads();
 	
-	int id;
+	int idx;
 
 	if (thid < 64) {  // 64 elements
 		idx = thid * 4;	
@@ -82,7 +98,8 @@ __global__ void monteCarlopi (int *din) {
 
 	if (thid == 0) { //  1 elements 
 		sm[idx] += sm[idx+128];
-		d_in[blockIdx.x] = sm[a];
+		din[blockIdx.x] = sm[a];
+		printf (" sum %d", sm[a]);	
 	}
 
 }
@@ -91,11 +108,12 @@ __global__ void monteCarlopi (int *din) {
 __global__ void prefixSum ( int *d_in , int *sum, int length) {
 
 
-	extern __shared__ int sm[2*THREADS];
+	extern __shared__ int sm[];
 	int thid = threadIdx.x;
 	int t = blockIdx.x*blockDim.x + threadIdx.x;
 	int a = 2*thid;
 	int b = 2*thid + 1;
+	int idx;
 	// find sum of points inside the rectangle using sum function
 
 	if (a < length) 
@@ -110,7 +128,6 @@ __global__ void prefixSum ( int *d_in , int *sum, int length) {
 	sm[a] += sm[b]; // 128 elements
 	__syncthreads();
 	
-	int id;
 
 	if (thid < 64) {  // 64 elements
 		idx = thid * 4;	
@@ -151,7 +168,7 @@ __global__ void prefixSum ( int *d_in , int *sum, int length) {
 
 	if (thid == 0) { //  1 elements 
 		sm[idx] += sm[idx+128];
-		*sum = sm[idx];		
+		*sum = sm[idx];	
 	}
 
 
@@ -160,24 +177,25 @@ __global__ void prefixSum ( int *d_in , int *sum, int length) {
 }
 
 
-void monteCarlopi(int num_blocks, int length, double pi_val) {
+void monteCarlopi(int num_blocks, int length, double & pi_val) {
 
 	// store the count in global array
 	int *d_in, *sum;
-	cudaMalloc(d_in, num_blocks*sizeof(int));
-	cudaMalloc(sum, sizeof(int));
-	monteCarlopi<<<num_blocks,THREADS, 2*THREADS>>>(d_in);
+	cudaMalloc((void**)&d_in, num_blocks*sizeof(int));
+	cudaMalloc((void**)&sum, sizeof(int));
+	printf ("num blocks %d ", num_blocks);
+	monteCarlopi<<<num_blocks,THREADS>>>(d_in);
 	if (num_blocks <= 2*THREADS) {
-		prefixSum<<<1, THREADS>>>(d_in, &sum, num_blocks);
+		prefixSum<<<1, THREADS>>>(d_in, sum, num_blocks);
 	} else {
 		
 		int num_blocks1 = num_blocks/(2*THREADS);
 		while (num_blocks1 > 1) {
 			num_blocks1 = num_blocks/(2*THREADS);
-			prefixSum<<<num_block1,THREADS(d_in, &sum, num_blocks);
+			prefixSum<<<num_blocks1,THREADS>>>(d_in, sum, num_blocks);
 			num_blocks = num_blocks1;
 		}
-		prefixSum<<<1,THREADS>>>(d_in, &sum, num_blocks);
+		prefixSum<<<1,THREADS>>>(d_in, sum, num_blocks);
 	}
 	cudaFree(d_in);
 	int h_sum[1];
@@ -188,10 +206,10 @@ void monteCarlopi(int num_blocks, int length, double pi_val) {
 
 int main(int argc,char **argv)
 {
-	int length = 0;
+	int length = 256;
 	double pi_val = 0;
 
 	int num_blocks = length/(2*THREADS);
 
-	monteCarlopi(num_blocks,length,&pi_val); 	
+	monteCarlopi(num_blocks,length,pi_val); 	
 }
