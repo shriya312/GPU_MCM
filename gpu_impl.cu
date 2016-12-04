@@ -1,7 +1,11 @@
 #include <stdio.h>
+#include <getopt.h>
+#include <string>
+#include <cstring>
 #include <stdlib.h>
 #include <curand.h>
 #include <curand_kernel.h>
+#include "MCpi.h"
 #define THREADS 128
 
 __device__ inline void rand_g (int &result) {
@@ -13,12 +17,12 @@ __device__ inline void rand_g (int &result) {
 	//printf (" %d ", result);	
 }
 
-__global__ void monteCarlopi (int *din) {
+__global__ void monteCarlopi (int *din, int length) {
 	
 	 __shared__ int sm[2*THREADS];
 
 	int thid = threadIdx.x;
-
+	int t = threadIdx.x + blockIdx.x*blockDim.x;
 	int a = 2*thid;
 	int b = 2*thid + 1;
 
@@ -26,21 +30,29 @@ __global__ void monteCarlopi (int *din) {
 	int x1,y1;
 	rand_g(x1);	
 	rand_g(y1);	
-	
-	x = (double)x1/RAND_MAX;
-	y = (double) y1/RAND_MAX;
-	if ((x*x + y*y) < 1)
-		sm[a] = 1; 
-	else 
+
+	if (2*t < length) {
+		x = (double)x1/RAND_MAX;
+		y = (double) y1/RAND_MAX;
+		if ((x*x + y*y) < 1)
+			sm[a] = 1; 
+		else 
+			sm[a] = 0;
+	} else {
 		sm[a] = 0;
+	}
 	rand_g(x1);	
-	rand_g(y1);	
-	x = (double) x1/RAND_MAX;
-	y = (double) y1/RAND_MAX;
-	if ((x*x + y*y) < 1)
-		sm[b] = 1;
-	else
-		sm[b] = 0; 
+	rand_g(y1);
+	if ( 2*t + 1 < length) {	
+		x = (double) x1/RAND_MAX;
+		y = (double) y1/RAND_MAX;
+		if ((x*x + y*y) < 1)
+			sm[b] = 1;
+		else
+			sm[b] = 0; 
+	} else {
+		sm[b] = 0;
+	}
 	// wait for all threads to finish
 
 	//__syncthreads();
@@ -193,7 +205,7 @@ void monteCarlopi(int num_blocks, int length, double & pi_val) {
 	cudaMalloc((void**)&d_in, num_blocks*sizeof(int));
 	cudaMalloc((void**)&temp, num_blocks*sizeof(int));
 	//printf ("num blocks %d ", num_blocks);
-	monteCarlopi<<<num_blocks,THREADS>>>(d_in);
+	monteCarlopi<<<num_blocks,THREADS>>>(d_in, length);
 	if (num_blocks == 1) {
 	}
 	else {
@@ -221,14 +233,15 @@ void monteCarlopi(int num_blocks, int length, double & pi_val) {
 	cudaFree(d_in);
 }
 
-int main(int argc,char **argv)
-{
-	int length = 512;
-	double pi_val = 0;
 
+double cudaMC_pi(int length)
+{
+	double pi_val;
 	int num_blocks = length/(2*THREADS);
 
 	monteCarlopi(num_blocks,length,pi_val); 
 
 	printf ("Value of pi : %f\n ", pi_val);	
+	
+	return pi_val; 
 }
