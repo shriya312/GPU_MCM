@@ -10,8 +10,14 @@ The following are included in the module:
 
 BEFORE YOU BEGIN
 
+Clone the repository:
+$ git clone https://github.com/shriya312/GPU_MCM.git
+
+The following have to be run each new shell opened:
 On stampede, load necessary modules by:
 $ module load cuda
+Set MC_HOME:
+$ MC_HOME=directory/where/rep/was/cloned
 
 GENERAL INSTRUCTIONS
 
