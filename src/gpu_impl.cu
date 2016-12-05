@@ -6,7 +6,7 @@
 #include "CycleTimer.h"
 #define THREADS 512
 
-#define SPT 2
+//#define SPT 4
 __device__ inline void rand_g (int &result) {
 	int thid = threadIdx.x;
 	curandState_t state;
@@ -16,7 +16,7 @@ __device__ inline void rand_g (int &result) {
 	//printf (" %d ", result);	
 }
 
-__global__ void monteCarlopi (float *samples, int *din, int length) {
+__global__ void monteCarlopi (float *samples, int *din, int length, int SPT) {
 	
 	 __shared__ int sm[THREADS];
 
@@ -29,16 +29,22 @@ __global__ void monteCarlopi (float *samples, int *din, int length) {
 	int num = 0;	
 	for (int i =0 ; i< SPT; i++ ) {
 		//rand_g(x1);	
-		//rand_g(y1);
+		//rand_g(y1); 
 		ind1 = t*SPT*2 + 2*i;
 		ind2 = t*SPT*2 + 2*i + 1;	
-		x = samples[ind1] ; //(double)x1/RAND_MAX;
-		y = samples[ind2] ; //(double) y1/RAND_MAX;
-		//printf ("%f %f ", x, y); 
-		if (thid*SPT + i < length) {
-			if ((x*x + y*y) < 1)
-				num += 1; 
+		if (ind1 < 2*length) { 
+			x = samples[ind1] ; //(double)x1/RAND_MAX;
+			y = samples[ind2] ; //(double) y1/RAND_MAX;
+			if ((x*x + y*y) > 1)
+			{}
+			else
+				num+=1;
 		}
+		//printf ("%f %f ", x, y); 
+		//if (t*SPT + i + 1 < length) {
+		//	if ((x*x + y*y) < 1)
+		//		num += 1; 
+		//}
 	}
 	// wait for all threads to finish
 	//__syncthreads();
@@ -205,7 +211,7 @@ __global__ void copy_kernel (int *out , int *in, int length) {
 
 }
 
-double monteCarlopi(float *samples, int num_blocks, int length, double & pi_val) {
+double monteCarlopi(float *samples, int num_blocks, int length, double & pi_val, int SPT) {
 
 	// store the count in global array
 	int *d_in, *temp;
@@ -214,7 +220,7 @@ double monteCarlopi(float *samples, int num_blocks, int length, double & pi_val)
 	cudaMalloc((void**)&temp, num_blocks*sizeof(int));
 	//printf ("num blocks %d ", num_blocks);
 	double start = CycleTimer::currentSeconds();
-	monteCarlopi<<<num_blocks,THREADS>>>(samples, d_in, length);
+	monteCarlopi<<<num_blocks,THREADS>>>(samples, d_in, length, SPT);
 	if (num_blocks == 1) {
 	}
 	else {
@@ -246,15 +252,16 @@ double monteCarlopi(float *samples, int num_blocks, int length, double & pi_val)
 }
 
 
-double cudaMC_pi(float *rand_samples, int length, double & gpuTime)
+double cudaMC_pi(float *rand_samples, int length, double & gpuTime, int samplesThread)
 {
 	double pi_val; 
 	float *d_randSamples;
+	int SPT = samplesThread;
 	cudaMalloc ((void**)&d_randSamples, 2*length* sizeof(float));
 	cudaMemcpy (d_randSamples, rand_samples, sizeof(float) *2 *length , cudaMemcpyHostToDevice);
 	int num_blocks = length/(SPT*THREADS);
-	
-	gpuTime = monteCarlopi(d_randSamples,num_blocks,length,pi_val); 
+	if (length % (SPT*THREADS) != 0) num_blocks++;	
+	gpuTime = monteCarlopi(d_randSamples,num_blocks,length,pi_val, SPT); 
 	printf ("Value of pi from GPU Implementation : %f\n", pi_val);	
 	cudaFree(d_randSamples);	
 	return pi_val; 
