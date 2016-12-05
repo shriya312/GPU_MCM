@@ -17,7 +17,7 @@ double mcm_pi (long int samples) {
 
 	}
 	//printf ("%d %d", outside, inside);
-	printf ("%f ", 4*(double)inside/(double)samples);
+	//	printf ("%f ", 4*(double)inside/(double)samples);
 	return 4*(double)inside/(double)samples;
 }
 
