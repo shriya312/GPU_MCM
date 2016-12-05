@@ -5,4 +5,5 @@
 #include <string>
 #include <cstring>
 #include <stdio.h>
-double cudaMC_pi (int length, double & gpuTime);
+double cudaMC_pi (float * samples, int length, double & gpuTime);
+void printCudaInfo();

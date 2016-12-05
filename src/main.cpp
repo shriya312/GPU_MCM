@@ -5,11 +5,13 @@ using std::endl;
 long inside =0;
 long outside = 0;
 
-double mcm_pi (long int samples) {
-	double x, y;
+double mcm_pi (float * rand_samples,long int samples) {
+	float x, y;
 	for (long i =0; i < samples;i++) {
-		x = (double) rand()/ (double) RAND_MAX;
-		y = (double) rand()/ (double) RAND_MAX;
+		x = rand_samples[i*2];
+		y = rand_samples[i*2 + 1];
+		//x = (double) rand()/ (double) RAND_MAX;
+		//y = (double) rand()/ (double) RAND_MAX;
 		if ((x*x + y*y) > 1) 
 			outside ++;
 		else
@@ -17,7 +19,7 @@ double mcm_pi (long int samples) {
 
 	}
 	//printf ("%d %d", outside, inside);
-	//	printf ("%f ", 4*(double)inside/(double)samples);
+	printf ("Value of pi from CPU Implementation : %f\n", 4*(double)inside/(double)samples);
 	return 4*(double)inside/(double)samples;
 }
 
@@ -28,7 +30,7 @@ void usage () {
 	printf (" -n <INT>	 Number of samples \n");
 	printf (" -t 		 Use thrust library\n");
 	printf (" -v 	 	 Run serial \n");
-	printf (" -c 		 Print System Configuration only\n");
+	printf (" -c 		 Print Cuda Information\n");
 	printf (" -h 		 Help\n");
 }
 int main(int argc,char **argv)
@@ -52,7 +54,7 @@ int main(int argc,char **argv)
 			runSerial = true;
 			break;
 		case 'c' :
-			//printConfig();
+			printCudaInfo();
 			return 0;
 		case 'h' :
 			usage();
@@ -62,20 +64,27 @@ int main(int argc,char **argv)
 			return 1;
 	}
 	}
-	double serialTime =0 , gpuTime= 0;	
+	double serialTime =0 , gpuTime= 0;
+	float *x;
+	x = (float *) malloc (2*length *sizeof(float));
+	for (int i =0 ; i < length ;i ++) {
+		x[i*2] = (float) rand()/ (float) RAND_MAX;
+		x[i*2 + 1] = (float) rand()/ (float) RAND_MAX;
+	}
 	if (useThrust) {
 
 	} else {
-		pi_val = cudaMC_pi(length, gpuTime);
+		pi_val = cudaMC_pi(x, length, gpuTime);
+		cout << "GPU TIME : " << gpuTime << endl;
 	}
 	if (runSerial) {
+		printf ("=======VALIDATION=======\n");
 		double start = CycleTimer::currentSeconds();
-		mcm_pi(length);
+		mcm_pi(x,length);
 		double end = CycleTimer::currentSeconds();
 		serialTime = end - start;
+		cout << "SERIAL TIME : " << serialTime << endl;
 	}
 
-	cout << "GPU TIME " << gpuTime << endl;
-	cout << "SERIAL TIME " << serialTime << endl;
-		
+	free(x);		
 }	

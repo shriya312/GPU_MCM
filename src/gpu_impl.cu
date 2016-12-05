@@ -1,14 +1,12 @@
 #include <stdio.h>
-#include <getopt.h>
-#include <string>
-#include <cstring>
 #include <stdlib.h>
 #include <curand.h>
 #include <curand_kernel.h>
 #include "MCpi.h"
 #include "CycleTimer.h"
-#define THREADS 128
+#define THREADS 512
 
+#define SPT 2
 __device__ inline void rand_g (int &result) {
 	int thid = threadIdx.x;
 	curandState_t state;
@@ -18,44 +16,31 @@ __device__ inline void rand_g (int &result) {
 	//printf (" %d ", result);	
 }
 
-__global__ void monteCarlopi (int *din, int length) {
+__global__ void monteCarlopi (float *samples, int *din, int length) {
 	
-	 __shared__ int sm[2*THREADS];
+	 __shared__ int sm[THREADS];
 
 	int thid = threadIdx.x;
 	int t = threadIdx.x + blockIdx.x*blockDim.x;
-	int a = 2*thid;
-	int b = 2*thid + 1;
-
-	double x,y;
-	int x1,y1;
-	rand_g(x1);	
-	rand_g(y1);	
-
-	if (2*t < length) {
-		x = (double)x1/RAND_MAX;
-		y = (double) y1/RAND_MAX;
-		if ((x*x + y*y) < 1)
-			sm[a] = 1; 
-		else 
-			sm[a] = 0;
-	} else {
-		sm[a] = 0;
-	}
-	rand_g(x1);	
-	rand_g(y1);
-	if ( 2*t + 1 < length) {	
-		x = (double) x1/RAND_MAX;
-		y = (double) y1/RAND_MAX;
-		if ((x*x + y*y) < 1)
-			sm[b] = 1;
-		else
-			sm[b] = 0; 
-	} else {
-		sm[b] = 0;
+	int a = thid;
+	float x,y;
+	//int x1,y1;
+	int ind1, ind2;
+	int num = 0;	
+	for (int i =0 ; i< SPT; i++ ) {
+		//rand_g(x1);	
+		//rand_g(y1);
+		ind1 = t*SPT*2 + 2*i;
+		ind2 = t*SPT*2 + 2*i + 1;	
+		x = samples[ind1] ; //(double)x1/RAND_MAX;
+		y = samples[ind2] ; //(double) y1/RAND_MAX;
+		//printf ("%f %f ", x, y); 
+		if (thid*SPT + i < length) {
+			if ((x*x + y*y) < 1)
+				num += 1; 
+		}
 	}
 	// wait for all threads to finish
-
 	//__syncthreads();
 	//if (thid == 0) {
 	////	printf (" rand %d %f ",  x1, x);
@@ -67,53 +52,64 @@ __global__ void monteCarlopi (int *din, int length) {
 
 	// find sum of points inside the rectangle using sum function
 
-	sm[a] += sm[b]; // 128 elements
+//	sm[a] += sm[b]; // 128 elements
+	sm[a] = num;
 	__syncthreads();
 	
 	int idx;
 
-	if (thid < 64) {  // 64 elements
-		idx = thid * 4;	
-		sm[idx] += sm[idx+2];
+	if (thid < 256) {  // 64 elements
+		idx = thid * 2;	
+		sm[idx] += sm[idx+1];
 	}
  	__syncthreads();	
 	
-	if (thid < 32) { // 32 elements
-		idx = thid*8;
-		sm[idx] += sm[idx + 4]; 
+	if (thid < 128) { // 32 elements
+		idx = thid*4;
+		sm[idx] += sm[idx + 2]; 
 		
 	}
 	__syncthreads();
 
-	if (thid < 16) { // 16 elements
+	if (thid < 64) { // 16 elements
+		idx = thid*8;
+		sm[idx] += sm[idx+4];
+	}  
+ 	__syncthreads();	
+
+	if (thid < 32) { // 8 elements
 		idx = thid*16;
 		sm[idx] += sm[idx+8];
 	}  
- 	__syncthreads();	
-
-	if (thid < 8) { // 8 elements
+ 	//__syncthreads();	
+	
+	if (thid < 16) { // 4 elements
 		idx = thid*32;
 		sm[idx] += sm[idx+16];
 	}  
- 	__syncthreads();	
-	
-	if (thid < 4) { // 4 elements
+ 	//__syncthreads();	
+	if (thid < 8) { // 4 elements
 		idx = thid*64;
 		sm[idx] += sm[idx+32];
 	}  
- 	__syncthreads();	
-		
-	if (thid < 2) { // 2 elements
+ 	//__syncthreads();	
+	if (thid < 4) { // 4 elements
 		idx = thid*128;
 		sm[idx] += sm[idx+64];
 	}  
- 	__syncthreads();	
+ 	//__syncthreads();	
+		
+	if (thid < 2) { // 2 elements
+		idx = thid*256;
+		sm[idx] += sm[idx+128];
+	}  
+ 	//__syncthreads();	
 
 	if (thid == 0) { //  1 elements 
-		sm[idx] += sm[idx+128];
+		sm[idx] += sm[idx+256];
 		din[blockIdx.x] = sm[a];
 		//printf ("sum : %d \n ", sm[idx]);
-//		printf (" sum %d", sm[a]);	
+		//printf (" sum %d ", sm[a]);	
 	}
 
 }
@@ -143,45 +139,56 @@ __global__ void prefixSum ( int *d_in , int *temp, int length) {
 	__syncthreads();
 	
 
-	if (thid < 64) {  // 64 elements
+	if (thid < 256) {  // 64 elements
 		idx = thid * 4;	
 		sm[idx] += sm[idx+2];
 	}
  	__syncthreads();	
 	
-	if (thid < 32) { // 32 elements
+	if (thid < 128) { // 32 elements
 		idx = thid*8;
 		sm[idx] += sm[idx + 4]; 
 		
 	}
  	__syncthreads();	
 
-	if (thid < 16) { // 16 elements
+	if (thid < 64) { // 16 elements
 		idx = thid*16;
 		sm[idx] += sm[idx+8];
 	}  
  	__syncthreads();	
 
-	if (thid < 8) { // 8 elements
+	if (thid < 32) { // 8 elements
 		idx = thid*32;
 		sm[idx] += sm[idx+16];
 	}  
  	__syncthreads();	
 	
-	if (thid < 4) { // 4 elements
+	if (thid < 16) { // 4 elements
 		idx = thid*64;
 		sm[idx] += sm[idx+32];
 	}  
  	__syncthreads();	
 		
-	if (thid < 2) { // 2 elements
+	if (thid < 8) { // 2 elements
 		idx = thid*128;
 		sm[idx] += sm[idx+64];
 	}  
  	__syncthreads();	
+	if (thid < 4) { // 2 elements
+		idx = thid*256;
+		sm[idx] += sm[idx+128];
+	}  
+ 	__syncthreads();	
+	if (thid < 2) { // 2 elements
+		idx = thid*512;
+		sm[idx] += sm[idx+256];
+	}  
+ 	__syncthreads();	
+
 
 	if (thid == 0) { //  1 elements 
-		sm[idx] += sm[idx+128];
+		sm[idx] += sm[idx+512];
 		temp[blockIdx.x] = sm[idx];
 		//printf ("sum p : %d \n ", sm[idx]);
 	}
@@ -198,7 +205,7 @@ __global__ void copy_kernel (int *out , int *in, int length) {
 
 }
 
-double monteCarlopi(int num_blocks, int length, double & pi_val) {
+double monteCarlopi(float *samples, int num_blocks, int length, double & pi_val) {
 
 	// store the count in global array
 	int *d_in, *temp;
@@ -207,7 +214,7 @@ double monteCarlopi(int num_blocks, int length, double & pi_val) {
 	cudaMalloc((void**)&temp, num_blocks*sizeof(int));
 	//printf ("num blocks %d ", num_blocks);
 	double start = CycleTimer::currentSeconds();
-	monteCarlopi<<<num_blocks,THREADS>>>(d_in, length);
+	monteCarlopi<<<num_blocks,THREADS>>>(samples, d_in, length);
 	if (num_blocks == 1) {
 	}
 	else {
@@ -239,14 +246,39 @@ double monteCarlopi(int num_blocks, int length, double & pi_val) {
 }
 
 
-double cudaMC_pi(int length, double & gpuTime)
+double cudaMC_pi(float *rand_samples, int length, double & gpuTime)
 {
-	double pi_val;
-	int num_blocks = length/(2*THREADS);
-
-	gpuTime = monteCarlopi(num_blocks,length,pi_val); 
-
-	printf ("Value of pi : %f\n ", pi_val);	
+	double pi_val; 
+	float *d_randSamples;
+	cudaMalloc ((void**)&d_randSamples, 2*length* sizeof(float));
+	cudaMemcpy (d_randSamples, rand_samples, sizeof(float) *2 *length , cudaMemcpyHostToDevice);
+	int num_blocks = length/(SPT*THREADS);
 	
+	gpuTime = monteCarlopi(d_randSamples,num_blocks,length,pi_val); 
+	printf ("Value of pi from GPU Implementation : %f\n", pi_val);	
+	cudaFree(d_randSamples);	
 	return pi_val; 
+}
+
+
+void printCudaInfo()
+{
+    // for fun, just print out some stats on the machine
+
+    int deviceCount = 0;
+    cudaError_t err = cudaGetDeviceCount(&deviceCount);
+
+    printf("---------------------------------------------------------\n");
+    printf("Found %d CUDA devices\n", deviceCount);
+
+    for (int i = 0; i < deviceCount; i++)
+    {
+        cudaDeviceProp deviceProps;
+        cudaGetDeviceProperties(&deviceProps, i);
+        printf("Device %d: %s\n", i, deviceProps.name);
+        printf("   SMs:        %d\n", deviceProps.multiProcessorCount);
+        printf("   Global mem: %.0f MB\n", static_cast<float>(deviceProps.totalGlobalMem) / (1024 * 1024));
+        printf("   CUDA Cap:   %d.%d\n", deviceProps.major, deviceProps.minor);
+    }
+    printf("---------------------------------------------------------\n");
 }
