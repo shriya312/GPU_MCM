@@ -2,7 +2,7 @@
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/functional.h>
 #include <thrust/transform_reduce.h>
-
+#include "CycleTimer.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -60,21 +60,22 @@ struct estimate_pi : public thrust::unary_function<unsigned int,float>
   }
 };
 
-int main(void)
+double thrustmain(int M)
 {
   // use 30K independent seeds
-  int M = 16777216;
-
+  //int M = 16777216;
+  double start = CycleTimer::currentSeconds();
   float estimate = thrust::transform_reduce(thrust::counting_iterator<int>(0),
                                             thrust::counting_iterator<int>(M),
                                             estimate_pi(),
                                             0.0f,
                                             thrust::plus<float>());
   estimate /= M;
+  double end = CycleTimer::currentSeconds();
 
   std::cout << std::setprecision(3);
   std::cout << "pi is approximately " << estimate << std::endl;
 
-  return 0;
+  return (end-start);
 }
 

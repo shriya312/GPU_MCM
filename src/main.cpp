@@ -74,7 +74,7 @@ int main(int argc,char **argv)
 		return 1;
 	}
 	printf ("OK..\n");
-	double serialTime =0 , gpuTime= 0;
+	double serialTime =0 , gpuTime= 0, thrustTime = 0;
 	float *x;
 	x = (float *) malloc (2*length *sizeof(float));
 	for (int i =0 ; i < length ;i ++) {
@@ -85,7 +85,13 @@ int main(int argc,char **argv)
 	printf ("=======PI ESTIMATION USING MONTE CARLO SIMULATION=======\n");
 	printf ("\n");	
 	if (useThrust) {
-
+		thrustTime = thrustmain (length);	
+		cout << "THRUST TIME : " << thrustTime << endl;
+		printf ("\n");	
+		pi_val = cudaMC_noVal(length, gpuTime, spt);
+		cout << "GPU TIME : " << gpuTime << endl;
+		printf ("\n");	
+		
 	} else {
 		pi_val = cudaMC_pi(x, length, gpuTime, spt);
 		cout << "GPU TIME : " << gpuTime << endl;

@@ -3,13 +3,10 @@ CC=nvcc
 CFLAGS=
 LDLIBS=
 HEADERS=
-SOURCES=main.cpp gpu_impl.cu
-$(EXEC): $(SOURCES) thrustMC
+SOURCES=main.cpp gpu_impl.cu monte_carlo.cu gpu_impl_noVal.cu
+$(EXEC): $(SOURCES) 
 	$(CC) $(LDLIBS) $(SOURCES) -o $@
 	mv cudaMC_pi ../bin/
-thrustMC: monte_carlo.cu
-	$(CC) $(LDLIBS) $^ -o $@
-	mv thrustMC ../bin/
 .PHONY: clean
 clean:
 	rm ../bin/$(EXEC)
