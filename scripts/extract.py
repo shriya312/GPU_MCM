@@ -1,17 +1,21 @@
 import os, sys
-
+import math
 fp = open ('f','r')
-gpu_time = 0
-cpu_time = 0
+search1 = str(sys.argv[1])
+search2 = str(sys.argv[2])
+num = int (sys.argv[3])
+time1 = 0
+time2 = 0
 for line in fp:
 	if "TIME" in line:
 		l = line.strip()
 		l1 = l.split()
-		if "GPU" in line:
-			gpu_time = float (l1[-1]);
-		elif "SERIAL" in line:
-			cpu_time = float ( l1[-1]);
+		if search1 in line:
+			time1 = float (l1[-1]);
+		elif search2 in line:
+			time2 = float ( l1[-1]);
 
 fp.close()
+log_num = int (math.log(num,2));
 
-print "%f %f"%(cpu_time,gpu_time)
+print "%d %f %f"%(log_num,time1,time2)

@@ -1,13 +1,15 @@
 #!/bin/bash
 
-num=32768
+num=1024
 
-for p in {10..25}
+for p in {1..15}
 do
 	../bin/./cudaMC_pi -n $num -v >f
-	python extract.py >> data.dat
+	python extract.py GPU SERIAL $num >> data1.dat
+	../bin/./cudaMC_pi -n $num -t >f
+	python extract.py THRUST GPU $num >> data2.dat
 	num=`expr $num \* 2`
-	echo $num
 done
 rm f
-mv data.dat ../plots/data.dat
+mv data1.dat ../plots/data1.dat
+mv data2.dat ../plots/data2.dat
