@@ -6,7 +6,7 @@
 \date{December 9, 2016}
 \author[Shriya Nair]{Shriya Nair}
 \institute{The University of Texas at Austin}
-\title[MC pi using GPU]{Monte Carlo Estimation of pi using GPU}
+\title[GPU Monte-Carlo pi]{Parallelization of Monte-Carlo Estimation of pi}
 %\subtitle{}
 
 \begin{document}
@@ -35,9 +35,7 @@
 \item GPU vs CPU
 \item Thrust Library vs My implementation
 \end{itemize}
-\item github Structure and How Tos
-\item Build System
-\item Scripts 
+\item github Structure and Build System
 \item What would I have done differently?
 \item Conclusion
 \end{itemize}
@@ -154,8 +152,8 @@ The algorithm was divided into the following steps:
 \begin{itemize}
 \item Step 1: Generate a pair of random number from 0-1
 \begin{itemize}
-\item CPU rand function used to generate 2*samples number of random numbers.  
-\item Values stored in an array and passed to both CPU and GPU estimation functions.
+\item CPU rand function used to generate 2*samples number of random numbers  
+\item Values stored in an array and passed to both CPU and GPU estimation functions
 \item In GPU impl, the array is copied from CPU to GPU memory and passed to kernel
 \item In the kernel, each thread with its unique thread index and block index accesses unique elements in the array
 \end{itemize}
@@ -167,7 +165,7 @@ The algorithm was divided into the following steps:
 \begin{itemize}
 \item Step 2: Find the number of points within the quarter circle
 \begin{itemize}
-\item A simple compute is used in both CPU and GPU impl to check whether a point lies within the quarter circle. 
+\item A simple compute is used in both CPU and GPU impl to check whether a point lies within the quarter circle 
 \item CPU: A count is maintained and incremented when the condition is true
 \item GPU: If true, the thread writes 1 to its unique location in another shared array per block
 \item    :  final count is calculated by adding all the 1s 
@@ -175,7 +173,7 @@ The algorithm was divided into the following steps:
 \item Step 3: Divide by total points to get the value of pi/4
 \begin{itemize}
 \item CPU: Straightforward division of total values satisfying the condition by total samples 
-\item GPU: The final count obtained is per block. These per block sums have to be added to get final total count. 
+\item GPU: The final count obtained is per block. These per block sums have to be added to get final total count 
 \item    : Division by total samples is done outside the kernel by CPU because its a low cost computation
 \end{itemize}
 \end{itemize}
@@ -197,7 +195,7 @@ Naive implementation is slower. The programmer is responsible for juicing out th
 Ping pong copy: 
 \begin{itemize}
 \item Input to perfix sum is the output of previous iteration.  
-\item This means each time the output global array has to be copied to input. Global memory -global memory copy is expensive in GPU.  
+\item This means each time the output global array has to be copied to input. Global memory -global memory copy is expensive in GPU 
 \item Instead, alternate input and output arrays as output and input every odd and even iteration 
 \end{itemize}
 \end{itemize}
@@ -210,13 +208,13 @@ Ping pong copy:
 \item Why was 1 written to another memory instead of performing atomic adds? 
 \begin{itemize}
 \item Atomic adds are expensive and serialize the code 
-\item GPU being a highly parallel device handles massive serialization very badly increasing latencies. 
+\item GPU being a highly parallel device handles massive serialization very badly increasing latencies 
 \item A technique called Parallel Prefix Sum was used to calculate sum
 \end{itemize}
 \item Optimizations in parallel prefix sum:  
 \begin{itemize}
 \item Loop unrolling: Standard optimization 
-\item Warp synchronization: Once less than 32 threads were forced to run, the warp scheduler scheduled and synchronized the threads. 
+\item Warp synchronization: Once less than 32 threads were forced to run, the warp scheduler scheduled and synchronized the threads 
 \item This means expensive synchronize thread calls could be avoided
 \end{itemize}
 \end{itemize}
@@ -237,13 +235,14 @@ The following previous work (and open source) was found:
 
 \begin{frame}                                                                                                                                                                          
 \frametitle{Ensuring Fairness}
-Note on Thurst comparison:
+\begin{block}{Note on comparison with Thrust}
 \begin{itemize}
 \item In Thurst implementation the very slow CUDA rand function has been used 
 \item This makes it unfair to compare my implementation with Thurst 
 \item Hence, another version was made which calls CUDA rand function.  
 \item Still missing something: The time to allocate and free memory was also included. Now the comparison is fair.  
 \end{itemize}
+\end{block}
 \end{frame}             
  
 
@@ -252,11 +251,12 @@ Note on Thurst comparison:
 %===============================================================================
 \begin{frame}                                                                                                                                                                          
 \frametitle{Results: 1/3}
-Comparison with naive CPU implementation
+\begin{block}{Comparison with naive CPU Implementation}
 \begin{itemize}
 \item For the first few elements, CPU implementation is faster because the overhead of launching threads beats the benefits obtained from parallelism 
 \item But for large number of samples, GPU implementation is approx 100x faster as shown below.
 \end{itemize}
+\end{block}
 \end{frame}             
  
 %===============================================================================
@@ -264,11 +264,13 @@ Comparison with naive CPU implementation
 %===============================================================================
 \begin{frame}                                                                                                                                                                          
 \frametitle{Results: 2/3}
-Comparison with CUDA Thrust Implementation
+
+\begin{block}{Comparison with CUDA Thrust Implementation}
 \begin{itemize}
 \item My implementation is always faster than that of Thrust as shown below. 
 \item From a glance at their code, potential for improvements were identified.  
 \end{itemize}
+\end{block}
 \end{frame}             
  
 %===============================================================================
@@ -276,12 +278,13 @@ Comparison with CUDA Thrust Implementation
 %===============================================================================
 \begin{frame}                                                                                                                                                                          
 \frametitle{Results: 3/3}
-Other observations:
+\begin{block}{Other Observations}
 \begin{itemize}
 \item Number of samples per thread for the fastest time is 1 or 2.  
 \item I expected an increase in performance for 4, as a tradeoff between overhead of starting threads vs serializing the code by half.  
 \item But, was midly surprised to find performance degradation 
 \end{itemize}
+\end{block}
 \end{frame}             
 
 %===============================================================================

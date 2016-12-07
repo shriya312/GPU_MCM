@@ -1,4 +1,4 @@
-This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2015.9.29)  7 DEC 2016 02:54
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=pdflatex 2015.9.29)  7 DEC 2016 03:09
 entering extended mode
  %&-line parsing enabled.
 **talk
@@ -632,20 +632,20 @@ LaTeX Font Info:    Font shape `OT1/phv/m/n' will be
 
 {/usr/share/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `OT1/phv/m/n' will be
-(Font)              scaled to size 9.49997pt on input line 45.
-LaTeX Font Info:    Try loading font information for OMS+phv on input line 45.
+(Font)              scaled to size 9.49997pt on input line 43.
+LaTeX Font Info:    Try loading font information for OMS+phv on input line 43.
 
 (/usr/share/texmf/tex/latex/psnfss/omsphv.fd
 File: omsphv.fd 
 )
 LaTeX Font Info:    Font shape `OMS/phv/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 45.
-LaTeX Font Info:    Try loading font information for U+msa on input line 45.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 43.
+LaTeX Font Info:    Try loading font information for U+msa on input line 43.
 
 (/usr/share/texmf/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2002/01/19 v2.2g AMS font definitions
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 45.
+LaTeX Font Info:    Try loading font information for U+msb on input line 43.
 
 (/usr/share/texmf/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2002/01/19 v2.2g AMS font definitions
@@ -661,7 +661,7 @@ File: umsb.fd 2002/01/19 v2.2g AMS font definitions
 
 ]
 LaTeX Font Info:    Font shape `OT1/phv/m/n' will be
-(Font)              scaled to size 11.39996pt on input line 146.
+(Font)              scaled to size 11.39996pt on input line 144.
  [7
 
 ] [8
@@ -701,9 +701,9 @@ File: figs/generic_pyramid.pdf Graphic file (type pdf)
 
  <./figs/generic_pyramid.pdf>]
 LaTeX Font Info:    Font shape `OT1/phv/m/it' in size <10.95> not available
-(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 447.
+(Font)              Font shape `OT1/phv/m/sl' tried instead on input line 450.
 LaTeX Font Info:    Font shape `OT1/phv/m/sl' will be
-(Font)              scaled to size 10.40245pt on input line 447.
+(Font)              scaled to size 10.40245pt on input line 450.
  [23
 
 ]
@@ -711,7 +711,7 @@ LaTeX Font Info:    Font shape `OT1/phv/m/sl' will be
 File: figs/validation_table.pdf Graphic file (type pdf)
 
 <use figs/validation_table.pdf>
-Overfull \hbox (15.60103pt too wide) in paragraph at lines 477--477
+Overfull \hbox (15.60103pt too wide) in paragraph at lines 480--480
 [][]  
  []
 
@@ -732,7 +732,7 @@ File: figs/RCS_PLIF.pdf Graphic file (type pdf)
 File: figs/LENSXX_components.pdf Graphic file (type pdf)
 
 <use figs/LENSXX_components.pdf>
-Overfull \vbox (2.64973pt too high) detected at line 537
+Overfull \vbox (2.64973pt too high) detected at line 540
  []
 
 [26
@@ -751,7 +751,7 @@ File: figs/surface_heat_flux_coarse_mesh.png Graphic file (type png)
  <./figs/surface_ablation_rate_node_valued_coarse_mesh.png (PNG copy)> <./figs/
 surface_heat_flux_coarse_mesh.png (PNG copy)>]
 LaTeX Font Info:    Font shape `OT1/phv/m/n' will be
-(Font)              scaled to size 8.54997pt on input line 598.
+(Font)              scaled to size 8.54997pt on input line 601.
  [28
 
 ] [29
@@ -770,7 +770,7 @@ LaTeX Font Info:    Font shape `OT1/phv/m/n' will be
 Here is how much of TeX's memory you used:
  8269 strings out of 256214
  149409 string characters out of 1917000
- 239963 words of memory out of 1500000
+ 239984 words of memory out of 1500000
  11222 multiletter control sequences out of 10000+200000
  24059 words of font info for 53 fonts, out of 1200000 for 2000
  645 hyphenation exceptions out of 8191
@@ -782,7 +782,7 @@ fonts/type1/bluesky/cm/cmbx8.pfb></usr/share/texmf/fonts/type1/bluesky/cm/cmmi6
 </usr/share/texmf/fonts/type1/bluesky/cm/cmsy8.pfb></usr/share/texmf/fonts/type
 1/bluesky/ams/msam7.pfb></usr/share/texmf/fonts/type1/urw/helvetic/uhvr8a.pfb><
 /usr/share/texmf/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on talk.pdf (29 pages, 3236943 bytes).
+Output written on talk.pdf (29 pages, 3239473 bytes).
 PDF statistics:
  322 PDF objects out of 1000 (max. 8388607)
  59 named destinations out of 1000 (max. 131072)
