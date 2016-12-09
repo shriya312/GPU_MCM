@@ -1,0 +1,11 @@
+set terminal png
+set output "cpu_gpu.png"
+set xlabel "log2(samples)"
+set ylabel "Executime time(seconds)"
+set title "CPU vs GPU performance for MC estimation of pi"
+plot "data1.dat" using 1:2 with lines title "GPU", "data1.dat" using 1:3 with lines title "CPU"
+set output "thrust_gpu.png"
+set xlabel "log2(samples)"
+set ylabel "Executime time(seconds)"
+set title "Thrust Library vs My implementation"
+plot "data2.dat" using 1:2 with lines title "Thrust", "data2.dat" using 1:3 with lines title "Fast impl"
