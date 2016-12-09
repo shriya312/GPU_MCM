@@ -72,13 +72,13 @@ GPUs are compute intensive devices
 \item Each SM runs one block of threads. If the num of blocks > number of SMs, then, the blocks are re run on SMs
 \item The maximum number of threads per block depends on the architecture.  
 \end{itemize}
-What does this mean to the programmer? 
+What does this mean to the programmer? \\
 The programmer is responsible for the synchronization!
 The programmer generates GPU kernels. 
-\begin{itemize}
-\item There is a fixed maximum number of threads per block. If this is exceeded the kernel won't run. 
-\item The number of threads per block is also limited.  
-\end{itemize}
+%\begin{itemize}
+%\item There is a fixed maximum number of threads per block. If this is exceeded the kernel won't run. 
+%\item The number of threads per block is also limited.  
+%\end{itemize}
 \end{frame}              
 
 %===============================================================================
@@ -86,7 +86,7 @@ The programmer generates GPU kernels.
 %===============================================================================
 \begin{frame}                                                                                                                                                                          
 \frametitle{CUDA GPU Kernels}
-How can a programmer handle all the exposed parallelism?
+How can a programmer handle all the exposed parallelism? Through kernels!
 \begin{itemize}
 \item A kernel is a function that is run by each thread in an SM.  
 \item The scheduler in a GPU only schedules multiple blocks and launches threads in each block but is not responsible for thread synchronization 
@@ -110,14 +110,27 @@ Is is worth it?
 \item Can explore various options such as varying number of threads, blocks, scheduling strategy 
 \item Speedups reported are in the order of 10x-100x 
 \end{itemize}
-Example of how a kernel is launched:
-%\begin{verbatim}
-%kernel_name<<<num_blocks,num_threads_per_block,total_shared_memory_per_block>>>(parameters passed to kernel);
-%\end{verbatim}
 Note: 
 \begin{itemize}
 \item The parameters passed must be on GPU memory or registers. GPU cannot read CPU memory!  
 \item The parameters passed are accessed by all threads in all blocks
+\end{itemize} 
+\end{frame}             
+ 
+
+%===============================================================================
+% NEW SLIDE
+%===============================================================================
+\begin{frame}                                                                                                                                                                          
+\frametitle{GPU Programming}
+Example of how a kernel is launched:
+%\begin{verbatim}
+%kernel_name<<<num_blocks,num_threads_per_block,total_shared_memory_per_block>>>(parameters passed to kernel);
+%\end{verbatim}
+How can GPUs be programmed?
+\begin{itemize}
+\item This project: in CUDA extended C++ supported by NVIDIA GPUs.  
+\item OpenCL can be used for other GPUs 
 \end{itemize} 
 \end{frame}             
  
@@ -147,7 +160,7 @@ Note:
 % NEW SLIDE
 %===============================================================================
 \begin{frame}                                                                                                                                                                          
-\frametitle{Implementation Details}
+\frametitle{Implementation Details: 1/3}
 The algorithm was divided into the following steps:
 \begin{itemize}
 \item Step 1: Generate a pair of random number from 0-1
@@ -161,20 +174,27 @@ The algorithm was divided into the following steps:
 \end{frame}              
 
 \begin{frame}                                                                                                                                                                          
-\frametitle{Implementation Details contd}
+\frametitle{Implementation Details: 2/3}
 \begin{itemize}
 \item Step 2: Find the number of points within the quarter circle
 \begin{itemize}
 \item A simple compute is used in both CPU and GPU impl to check whether a point lies within the quarter circle 
 \item CPU: A count is maintained and incremented when the condition is true
-\item GPU: If true, the thread writes 1 to its unique location in another shared array per block
-\item    :  final count is calculated by adding all the 1s 
+\item GPU: If true, the thread writes 1 to its unique location in another shared array per block. Final count is calculated by adding all the 1s 
 \end{itemize}
+\end{itemize}
+\begin{center}
+\includegraphics[width=5.5cm]{surface_ablation_rate_node_valued_coarse_mesh.png}
+\end{center}
+\end{frame}              
+
+\begin{frame}                                                                                                                                                                          
+\frametitle{Implementation Details: 3/3}
+\begin{itemize}
 \item Step 3: Divide by total points to get the value of pi/4
 \begin{itemize}
 \item CPU: Straightforward division of total values satisfying the condition by total samples 
 \item GPU: The final count obtained is per block. These per block sums have to be added to get final total count 
-\item    : Division by total samples is done outside the kernel by CPU because its a low cost computation
 \end{itemize}
 \end{itemize}
 \end{frame}              
@@ -183,7 +203,7 @@ The algorithm was divided into the following steps:
 % NEW SLIDE
 %===============================================================================
 \begin{frame}                                                                                                                                                                          
-\frametitle{Optimizations}
+\frametitle{Optimizations: 1/3}
 Naive implementation is slower. The programmer is responsible for juicing out the performance benefits from GPU. Here's how i did it:
 \begin{itemize}
 \item Calling rand function from CPU: 
@@ -192,7 +212,12 @@ Naive implementation is slower. The programmer is responsible for juicing out th
 \item This is not fair to compare because the aim is to compare compute power and timing
 \item Hence, CPU rand is used for both implementations 
 \end{itemize}
-Ping pong copy: 
+\end{itemize}
+\end{frame}              
+\begin{frame}                                                                                                                                                                          
+\frametitle{Optimizations: 2/3}
+\begin{itemize}
+\item Ping pong copy: 
 \begin{itemize}
 \item Input to perfix sum is the output of previous iteration.  
 \item This means each time the output global array has to be copied to input. Global memory -global memory copy is expensive in GPU 
@@ -203,7 +228,7 @@ Ping pong copy:
 
 
 \begin{frame}                                                                                                                                                                          
-\frametitle{Optimizations contd}
+\frametitle{Optimizations: 3/3}
 \begin{itemize}
 \item Why was 1 written to another memory instead of performing atomic adds? 
 \begin{itemize}
@@ -281,7 +306,7 @@ The following previous work (and open source) was found:
 \begin{block}{Other Observations}
 \begin{itemize}
 \item Number of samples per thread for the fastest time is 1 or 2.  
-\item I expected an increase in performance for 4, as a tradeoff between overhead of starting threads vs serializing the code by half.  
+\item I expected an increase in performance for 4: tradeoff between overhead of starting threads vs serializing the code by half 
 \item But, was midly surprised to find performance degradation 
 \end{itemize}
 \end{block}
@@ -308,7 +333,7 @@ The following previous work (and open source) was found:
 \begin{center}
 \begin{itemize}
 \item Satisfied with the general direction of the project from start
-\item Always scope for improvement
+\item There's always scope for improvement
 \item Could have explored non open source fast implementations 
 \item Could have modified thrust library, but implementing from scratch was much more fun!
 \item Could have given more flexibility to user 
