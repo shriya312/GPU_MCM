@@ -39,6 +39,11 @@ Part 3: Generate plots
    $ gnuplot plot_script.sh 
 Reads data1.dat and data2.dat and generates cpu_gpu.png and thrust_gpu.png
 
+Part4: Generate pdf of presentation
+$ cd GPU_MCM/presentation
+$ make
+This generates presentation-talk.pdf
+
 DEPENDENCIES:
 
 Part 1: 
@@ -48,6 +53,8 @@ Part 2:
 <none>
 Part 3:
 gnuplot
+Part 4:
+pdflatex
 
 DIRECTORY STRUCTURE:
 
