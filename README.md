@@ -16,8 +16,6 @@ $ git clone https://github.com/shriya312/GPU_MCM.git
 The following have to be run each new shell opened:
 On stampede, load necessary modules by:
 $ module load cuda
-Set MC_HOME:
-$ MC_HOME=directory/where/rep/was/cloned
 
 GENERAL INSTRUCTIONS
 
@@ -30,16 +28,16 @@ $ ./cudaMC_pi <options> (-h for help and usage)
 Part 2: Generate data for scripts
 1. Generate the executable as above
 2. 
-   $ cd GPU_MCM
-   $ scripts/./gen_data.sh
- This generates data.dat for plotting
+   $ cd GPU_MCM/scripts
+   $ ./gen_data.sh
+ This generates data1.dat  data2.dat for plotting in plots/
 
 Part 3: Generate plots
 1. Run Part 1 and Part 2
 2. 
-   $ cd GPU_MCM
-   $ scripts/./plot.sh 
-Reads data.dat and generates plot1.png and plot2.png
+   $ cd GPU_MCM/plots
+   $ gnuplot plot_script.sh 
+Reads data1.dat and data2.dat and generates cpu_gpu.png and thrust_gpu.png
 
 DEPENDENCIES:
 
@@ -56,14 +54,16 @@ DIRECTORY STRUCTURE:
 src/ : Contains all source files and Makefile
 	main.cpp : Main file
 	gpu_impl.cu : GPU implementation file
-	serial_impl.c : CPU implementation file
+	gpu_impl_noVal.cu: GPU Implementation to compare with thrust
+	monte_carlo.cu : Thrust Library implementation
+	CycleTimer.h : header file with functions to measure execution time
+	MC_pi.h: header file with includes and function declarations
 bin/ : Contains executable
 	cudaMC_pi : Executable generated
 scripts/ : Contains necessary scripts
 	gen_data.sh : Run this script
 	extract.py : Python script to help
-	plot.sh : To plot the given data
 plots/ : Contains plots in ".png" file
-	plot1.png : Compares serial vs Parallel impl
-	plot2.png: Compares serial, my impl and thrust
-
+	cpu_gpu.png : Compares serial vs Parallel impl
+	thrust_gpu.png: Compares serial, my impl and thrust
+	plot_script.sh : Script that generates plots
